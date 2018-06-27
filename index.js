@@ -4,12 +4,12 @@ const methodOverride = require('method-override');
 const pg = require('pg');
 
 // Initialise postgres client
-const client = new Client({
-  user: 'akira',
+const configs = {
+  user: 'saywan',
   host: '127.0.0.1',
   database: 'pokemons',
   port: 5432,
-});
+};
 
 const pool = new pg.Pool(configs);
 
@@ -43,36 +43,75 @@ app.engine('jsx', reactEngine);
  */
 
 app.get('/', (req, response) => {
-  // query database for all pokemon
 
-  // respond with HTML page displaying all pokemon
-  //
   const queryString = 'SELECT * from pokemon'
+
 
   pool.query(queryString, (err, result) => {
     if (err) {
       console.error('query error:', err.stack);
     } else {
-      console.log('query result:', result);
 
-      // redirect to home page
-      response.send( result.rows );
+      let context = {
+        pokemon : result.rows
+      }
+
+      response.render('home', context);
     }
   });
 
 });
 
-app.get('/new', (request, response) => {
+app.get('/pokemon/:id', (req, response) => {
+  let index = req.params.id;
+  const queryString = 'SELECT * from pokemon where id =' + index;
+
+  pool.query(queryString, (err, result) => {
+    if (err) {
+      console.error('query error:', err.stack);
+    } else {
+
+      let context = {
+        pokemon : result.rows[0]
+      }
+
+      // redirect to home page
+      response.render('Pokemon', context);
+    }
+  });
+
+});
+
+app.get('/new', (req, response) => {
   // respond with HTML page with form to create new pokemon
-  response.render('new');
+  response.render('New');
+});
+
+app.get('/pokemon/:id/edit', (req, response) => {
+  let index = req.params.id;
+  const queryString = 'SELECT * from pokemon where id =' + index;
+
+  pool.query(queryString, (err, result) => {
+    if (err) {
+      console.error('query error:', err.stack);
+    } else {
+
+      let context = {
+        pokemon : result.rows[0]
+      }
+
+      // redirect to home page
+      response.render('Edit', context);
+    }
+  });
 });
 
 
 app.post('/pokemon', (req, response) => {
   let params = req.body;
 
-  const queryString = 'INSERT INTO pokemon(name, height) VALUES($1, $2)'
-  const values = [params.name, params.height];
+  const queryString = 'INSERT INTO pokemon(num, name, img, height, weight) VALUES($1, $2, $3, $4, $5)'
+  const values = [params.num, params.name, params.img, params.height, params.weight];
 
   pool.query(queryString, values, (err, res) => {
     if (err) {
